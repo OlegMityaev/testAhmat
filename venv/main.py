@@ -59,6 +59,14 @@ def penis(message):
         bot.send_message(message.chat.id, f'{name} ты в игре, твой кок целых {users[name][0]} см')
 
 
+@bot.message_handler(commands=['топ'])
+def top(message):
+    c = 0
+    for i in users:
+        c += 1
+        bot.send_message(message.chat.id, f'{c}. {i} -  {users[i][0]} cm')
+
+
 
 @bot.message_handler(commands=['долг'])
 def dolg(message):
