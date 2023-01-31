@@ -3,6 +3,9 @@ from telebot import types
 import time
 import bs4
 import random
+from datetime import datetime
+import pandas as pd
+import numpy as np
 
 def cal_t():
     months_eng = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -18,7 +21,7 @@ def cal_t():
     return t
 
 
-token = '5863949340:AAF93M7a3FtA4DzUN6RhSBTyK_TvAUunZsg'
+token = '5931893415:AAEjFSs3qjX4DqOsx5oojBXspAoZ52IuU4I'
 bot = telebot.TeleBot(token)  #да блть
 
 @bot.message_handler(commands=['start'])
@@ -31,40 +34,49 @@ def d(message):
     bot.send_message(message.chat.id,'/start - начало \n /долг - долг Виктора \n /писюн \n /топ')
 
 
-users = {}
+users = pd.read_excel('us.xlsx')
+
+
 
 @bot.message_handler(commands=['писюн'])
 def penis(message):
+    global users
     name = message.from_user.username
-    s_t = time.time()
-    if name in users:
-        if round(time.time() - users[name][1]) >= 60*60*24: #играл сегодня или нет
+    s_t = str(datetime.now().day) + str(datetime.now().month)
+    if name in list(users['name']):
+        ind = int(users[users['name'] == name].index.tolist()[0])  #индекс чела в бд
+        print(users)
+        if str(users['date'][ind]) != (str(datetime.now().day) + str(datetime.now().month)): #играл сегодня или нет
             x = random.randint(-5, 10)
-            l = users[name][0] + x
-            users[name][0] = l
+            l = int(users['cm'][ind]) + x
+            users.loc[[ind], ['cm']] = l
+            users.loc[[ind], ['date']] = s_t
             if x >= 0:
                 bot.send_message(message.chat.id, f'{name}, твій пісюн виріс на {x} см. Тепер його довжина {l} см')
+                users.to_excel('us.xlsx')
             else:
                 if l < 0:
                     while l < 0:
                         x = random.randint(-5, 10)
-                        l = users[name][0] + x
+                        l = int(users[ind]['cm']) + x
                 bot.send_message(message.chat.id, f'{name}, твій пісюн зменшився на {abs(x)} см. Тепер його довжина {l} см')
+                users.to_excel('us.xlsx')
+
         else:
             bot.send_message(message.chat.id, f'{name}, ти сьогодні вже грав')
     else:
         x = random.randint(1, 10)
-        users.setdefault(name, []).append(x)
-        users[name].append(s_t) #доб времени прироста
-        bot.send_message(message.chat.id, f'{name} ты в игре, твой кок целых {users[name][0]} см')
+        a = pd.DataFrame({'name': name, 'cm': x, 'date': s_t}, index=[len(users['name'])])
+        users = pd.concat([users, a])
+        ind = int(users[users['name'] == name].index.tolist()[0])  #индекс чела
+        bot.send_message(message.chat.id, f'{name} ты в игре, твой кок целых {users["cm"][ind]} см')
+        users.to_excel('us.xlsx')
 
 
 @bot.message_handler(commands=['топ'])
 def top(message):
-    c = 0
-    for i in users:
-        c += 1
-        bot.send_message(message.chat.id, f'{c}. {i} -  {users[i][0]} cm')
+    for i in range(len(users)):
+        bot.send_message(message.chat.id, f'{i+1}. {users["name"][i]} -  {users["cm"][i]} cm')
 
 
 

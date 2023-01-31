@@ -1,6 +1,6 @@
-a = {}
-i = 0
-while True:
-    i += 1
-    player = f'player{i}'
-    print(player)
+import pandas as pd
+
+users = pd.DataFrame({'name': [],
+                      'cm': [],
+                      'date': []})
+users.to_excel('us.xlsx')
